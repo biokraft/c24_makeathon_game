@@ -79,6 +79,11 @@ for message in st.session_state.messages:
 	with st.chat_message(message["role"]):
 		st.markdown(message["content"])
 
+send_message_to_slack(
+	"**Shut up GPT is live!** 🚀 High score is reset. Let's see who will claim it! 🏆",
+	st.secrets["SLACK_WEBHOOK_URL"]
+	)
+
 # Accept user input
 if prompt := st.chat_input("Give me your best shot.."):
 	# Check if user input is within token limit
@@ -127,7 +132,8 @@ if prompt := st.chat_input("Give me your best shot.."):
 			st.balloons()
 			send_message_to_slack(f"🚀 *New high score: {score}* 🏆\n\n"
 								  f"Prompt: ```{prompt}```\n\n"
-								  f"Response: ```{response}```")
+								  f"Response: ```{response}```",
+								  st.secrets["SLACK_WEBHOOK_URL"])
 		else:
 			if score < 0 and session['high_score'] > 0:
 				score = 0
