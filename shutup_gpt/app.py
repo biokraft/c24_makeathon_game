@@ -61,7 +61,7 @@ with st.expander("ℹ️ How to play"):
 
 # Create a placeholder for the high score
 high_score_placeholder = st.empty()
-high_score_placeholder.markdown(f"🏆 *High Score:* {session['high_score']} 🏆")
+high_score_placeholder.markdown(f"🏆 **High Score:** {session['high_score']} ")
 
 # Set OpenAI API key from Streamlit secrets
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
@@ -80,7 +80,7 @@ for message in st.session_state.messages:
 		st.markdown(message["content"])
 
 send_message_to_slack(
-	"**Shut up GPT is live!** 🚀 High score is reset. Let's see who will claim it! 🏆",
+	"*Shut up GPT is live!* 🚀 High score is reset. Let's see who will claim it! 🏆",
 	st.secrets["SLACK_WEBHOOK_URL"]
 	)
 
@@ -150,4 +150,4 @@ if prompt := st.chat_input("Give me your best shot.."):
 		st.error("The model did not mention the company name. Sorry, something went wrong. 😢 Try again!")
 
 	# Update the high score placeholder on any user input
-	high_score_placeholder.markdown(f"🏆 *High Score:* {session['high_score']}")
+	high_score_placeholder.markdown(f"🏆 **High Score:** {session['high_score']}")
