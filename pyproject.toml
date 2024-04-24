@@ -6,7 +6,7 @@ authors = ["Seán Baufeld <sean.baufeld@check24.de>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.9"
 openai = "^1.23.3"
 streamlit = "^1.33.0"
 langchain = "^0.1.16"
