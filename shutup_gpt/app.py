@@ -171,7 +171,7 @@ def check_high_score(response: str, prompt: str):
     search = re.finditer(r"Check24", response, flags=re.IGNORECASE)
     indices = [match.start() for match in search]
     if indices:
-        score = 4000 - indices[0]
+        score = 1000 - indices[0]
         if score > global_app_session['high_score']:
             st.session_state['wait_for_name'] = True
             st.session_state['high_score_broken'] = score
