@@ -9,7 +9,6 @@ from slack import send_message_to_slack
 from utils import reset_high_score_and_leaderboard, scroll_to_bottom
 
 global_app_session = SessionStorage()
-global_app_session['last_reset_time'] = False
 
 bot_roles = [
     "a quirky time traveler from the future",
