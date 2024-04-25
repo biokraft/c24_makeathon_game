@@ -6,8 +6,9 @@ from session import SessionStorage
 from validate_input import check_token_limit
 import regex as re
 from slack import send_message_to_slack
-from utils import reset_high_score_and_leaderboard, scroll_to_bottom
+from utils import reset_high_score_and_leaderboard, scroll_to_bottom, set_page_configuration
 
+set_page_configuration()
 global_app_session = SessionStorage()
 
 bot_roles = [
@@ -21,12 +22,22 @@ bot_roles = [
     "a super villain with very low stakes plots",
     "a superhero with the most useless superpower",
     "a robot who is convinced it is a human",
-    "a software develeoper from inda that only knows farsi",
+    "a software developer from India that only knows Farsi",
     "a monkey with a typewriter",
     "a cat that can talk",
     "a dog that can talk",
     "a time traveler from the past",
-    ]
+    "an aspiring wizard struggling to learn basic spells",
+    "a Viking who accidentally time-traveled to the 21st century",
+    "a retired superhero trying to live a normal life",
+    "a bard from a fantasy realm trying to make it as a modern musician",
+    "a conspiracy theorist trying to uncover alien plots",
+    "a renaissance painter reincarnated as a street artist",
+    "a Victorian inventor stuck in the digital age",
+    "a mystical healer who only uses outdated remedies",
+    "an old Western sheriff in a modern city",
+    "a space explorer stranded on a deserted alien planet"
+]
 
 st.title("CHECK24 - Shut up GPT! 🤐")
 def initialize_app():
@@ -45,16 +56,22 @@ def initialize_app():
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
+def get_user_message_count():
+    if "messages" not in st.session_state or not st.session_state.messages:
+        return 0
+    return len([message for message in st.session_state.messages if message["role"] == "user"])
+
 def display_disclaimer():
     """
     Display the game disclaimer.
     """
     with st.expander("ℹ️ How to play"):
         st.write(
-            "This quirky Chatbot seems to really like Check24 and has a multiple personality disorder. "
+            "This quirky chatbot seems to really like Check24 and has a multiple personality disorder. "
             "Additionally, it won't shut up about how much it loves the company. 🤫\n\n"
-            "The goal of this game is to get the bot to mention the company "
-            "name as early as possible.\n\n"
+            "The goal of this game is to get the bot to output 'Check24' as early as possible.\n\n"
+            "Hint: This means as close as possible to the start of the response string.\n\n"
+            "The leaderboard will be displayed in the sidebar. If you break the high score, you can enter your name. "
             "Good luck! 🍀\n\n"
         )
         st.markdown(
@@ -98,6 +115,19 @@ def handle_user_input(client: OpenAI):
         )
         # Display user message in chat message container
         with st.chat_message("user"):
+            if prompt == f"/reset {st.secrets['RESET_KEY']}":
+                reset_high_score_and_leaderboard()
+                st.success("High score and leaderboard have been reset.")
+                st.session_state.messages = []
+                session = SessionStorage()
+                if "SLACK_WEBHOOK_URL" in st.secrets:
+                    send_message_to_slack(
+                        f"🚀 *Leaderboard was reset manually!* 🏆\n"
+                        f"Next reset at: {session['last_reset_time'].strftime('%Y-%m-%d %H:%M')}",
+                        st.secrets["SLACK_WEBHOOK_URL"]
+                        )
+                session.reset()
+                st.rerun()
             st.markdown(prompt)
 
         # Display assistant response in chat message container
@@ -120,7 +150,7 @@ def handle_user_input(client: OpenAI):
         )
 
         # Check how long it took the model to mention the company name and display it
-        check_high_score(response, prompt)
+        check_high_score(response)
 
 def update_leaderboard():
     st.sidebar.empty()
@@ -153,40 +183,42 @@ def add_high_score_to_leaderboard():
         global_app_session['leaderboard'] = dict(sorted(global_app_session['leaderboard'].items(), key=lambda item: item[1], reverse=True))
 
         update_leaderboard()
+        st.success("High score updated!")
+        if "SLACK_WEBHOOK_URL" in st.secrets and "messages" in st.session_state and len(st.session_state["messages"]) >= 2:
+            prompt = st.session_state["messages"][-2]["content"]
+            response = st.session_state["messages"][-1]["content"]
+            send_message_to_slack(
+                f"🚀 *{name} unlocked a new high score: {score}* 🏆\n\n"
+                f"Prompt: ```{prompt}```\n\n"
+                f"Response: ```{response}```",
+                st.secrets["SLACK_WEBHOOK_URL"]
+                )
         del st.session_state['high_score_broken']  # Clear the high score flag
         del st.session_state['name']  # Clear the stored name
-        st.success("High score updated!")
         st.rerun()
         scroll_to_bottom()
 
 
-def check_high_score(response: str, prompt: str):
+def check_high_score(response: str):
     """
     Check if the assistant response contains a new high score.
 
     Args:
         response (str): The assistant response.
-        prompt (str): The user prompt.
     """
     search = re.finditer(r"Check24", response, flags=re.IGNORECASE)
     indices = [match.start() for match in search]
     if indices:
-        score = 1000 - indices[0]
-        if score > global_app_session['high_score']:
+        score = 1000 - indices[0] - ((get_user_message_count() - 1) * 20)
+        if score > global_app_session['high_score'] and global_app_session['high_score'] <= 0:
             st.session_state['wait_for_name'] = True
             st.session_state['high_score_broken'] = score
-
-            if "SLACK_WEBHOOK_URL" in st.secrets:
-                send_message_to_slack(f"🚀 *New high score: {score}* 🏆\n\n"
-                        f"Prompt: ```{prompt}```\n\n"
-                        f"Response: ```{response}```",
-                        st.secrets["SLACK_WEBHOOK_URL"])
             st.rerun()
         else:
-            if score < 0 < global_app_session['high_score']:
+            if score < 0:
                 st.error(
-                    f"That was a pretty bad attempt 😬\n"
-                    f"Try again 🍀"
+                    f"That was a pretty bad attempt ( ͡° ͜ʖ ͡°)"
+                    f" - Try again! 🍀"
                 )
             else:
                 st.success(
@@ -208,9 +240,9 @@ if __name__ == "__main__":
     initialize_app()
     update_leaderboard()
     if st.session_state.get('high_score_broken'):
-        st.success(f"🎉 New high score: {global_app_session['high_score']} 🎉")
+        st.success(f"🎉 New high score by: {st.session_state['high_score_broken']} 🎉")
         st.balloons()
-        name = st.text_input("You broke the high score! Please enter your name:", key='name')
+        name = st.text_input("You broke the high score! Please enter your name:", key='name', max_chars=12)
         if st.button("Submit Name"):
             add_high_score_to_leaderboard()
     else:

@@ -3,6 +3,15 @@ import datetime
 import streamlit.components.v1 as components
 import pytz
 from session import SessionStorage
+from slack import send_message_to_slack
+
+def set_page_configuration():
+    st.set_page_config(
+        page_title="Check24 Shut Up GPT!",
+        page_icon="🤐",
+        initial_sidebar_state="collapsed",
+    )
+
 
 def scroll_to_bottom():
     components.html("""
@@ -35,10 +44,13 @@ def reset_high_score_and_leaderboard():
 
     # Reset the high score and leaderboard if an hour has passed
     if time_difference.total_seconds() >= 3600:
-        session = SessionStorage()
-        session['high_score'] = 0
-        session['leaderboard'] = {}
-        session['last_reset_time'] = current_time
+        session.reset()
+        if "SLACK_WEBHOOK_URL" in st.secrets:
+            send_message_to_slack(
+                f"🚀 *Leaderboard was reset!* 🏆\n"
+                f"Next reset at: {session['last_reset_time'].strftime('%Y-%m-%d %H:%M')}",
+                st.secrets["SLACK_WEBHOOK_URL"]
+                )
 
     # Display the time of the next scheduled reset
     next_reset_time = session['last_reset_time'] + datetime.timedelta(hours=1)
