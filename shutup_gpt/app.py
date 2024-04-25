@@ -2,11 +2,11 @@ import random
 import streamlit as st
 from openai import OpenAI
 from prompts import basic_prompt
-from SessionStorage import SessionStorage
+from session import SessionStorage
 from validate_input import check_token_limit
 import regex as re
 from slack import send_message_to_slack
-from utils import scroll_to_bottom
+from utils import reset_high_score_and_leaderboard, scroll_to_bottom
 
 session = SessionStorage()
 
@@ -125,6 +125,7 @@ def handle_user_input(client: OpenAI):
 def update_leaderboard():
     st.sidebar.empty()
     st.sidebar.title("Leaderboard")
+    reset_high_score_and_leaderboard()
     if not session['leaderboard']:
         st.sidebar.write("No high scores yet. Be the first to claim the top spot!")
     else:
@@ -196,10 +197,11 @@ def check_high_score(response: str, prompt: str):
 
 
 if __name__ == "__main__":
-    send_message_to_slack(
-        "*Shut up GPT is live!* 🚀 High score is reset. Let's see who will claim it! 🏆",
-        st.secrets["SLACK_WEBHOOK_URL"]
-        )
+    if not st.session_state.get('app_running'):
+        send_message_to_slack(
+            "*Shut up GPT is live!* 🚀 High score is reset. Let's see who will claim it! 🏆",
+            st.secrets["SLACK_WEBHOOK_URL"]
+            )
     initialize_app()
     update_leaderboard()
     if st.session_state.get('high_score_broken'):
