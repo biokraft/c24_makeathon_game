@@ -6,6 +6,7 @@ from SessionStorage import SessionStorage
 from validate_input import check_token_limit
 import regex as re
 from slack import send_message_to_slack
+from utils import scroll_to_bottom
 
 session = SessionStorage()
 
@@ -21,18 +22,9 @@ bot_roles = [
     "a superhero with the most useless superpower",
     "a robot who is convinced it is a human",
     "a software develeoper from inda that only knows farsi",
-    "luffy from one piece",
-    "homer simpson",
-    "steven hawkings",
-    "yung lean",
-    "biggie smalls",
-    "tupac",
-    "spongebob",
-    "the users lost brother",
     "a monkey with a typewriter",
     "a cat that can talk",
     "a dog that can talk",
-    "Gandalf from Lord of the Rings",
     "a time traveler from the past",
     ]
 
@@ -74,7 +66,6 @@ def display_disclaimer():
         )
 
 
-high_score_placeholder = st.empty()
 def update_high_score(score: int = 0):
     """
     Display the current high score.
@@ -83,7 +74,6 @@ def update_high_score(score: int = 0):
         score (int): The high score.
     """
     session['high_score'] = score
-    high_score_placeholder.markdown(f"🏆 **High Score:** {session['high_score']} ")
 
 
 def handle_user_input(client: OpenAI):
@@ -135,32 +125,39 @@ def handle_user_input(client: OpenAI):
 def update_leaderboard():
     st.sidebar.empty()
     st.sidebar.title("Leaderboard")
-    print(session['leaderboard'])
     if not session['leaderboard']:
         st.sidebar.write("No high scores yet. Be the first to claim the top spot!")
     else:
         for idx, (player, score) in enumerate(session['leaderboard'].items()):
             st.sidebar.write(f"{idx + 1}. {player}: {score}")
 
-def add_high_score_to_leaderboard(name: str, score: int):
+def add_high_score_to_leaderboard():
     """
     Update the leaderboard with the new high score.
-
-    Args:
-        name (str): The name of the user.
-        score (int): The high score.
     """
     # Initialize the leaderboard if it doesn't exist
     if not session['leaderboard']:
         session['leaderboard'] = {}
 
-    # Add the new high score to the leaderboard
-    session['leaderboard'][name] = score
+    if st.session_state.get('high_score_broken', False) and 'name' in st.session_state:
+        name = st.session_state['name']
+        score = st.session_state['high_score_broken']
 
-    # Sort the leaderboard in descending order of scores
-    session['leaderboard'] = dict(sorted(session['leaderboard'].items(), key=lambda item: item[1], reverse=True))
+        if score > session['high_score']:
+            update_high_score(score)
 
-    update_leaderboard()
+        # Add the new high score to the leaderboard
+        session['leaderboard'][name] = score
+        # Sort the leaderboard in descending order of scores
+        session['leaderboard'] = dict(sorted(session['leaderboard'].items(), key=lambda item: item[1], reverse=True))
+
+        update_leaderboard()
+        del st.session_state['high_score_broken']  # Clear the high score flag
+        del st.session_state['name']  # Clear the stored name
+        st.success("High score updated!")
+        st.rerun()
+        scroll_to_bottom()
+
 
 def check_high_score(response: str, prompt: str):
     """
@@ -175,22 +172,14 @@ def check_high_score(response: str, prompt: str):
     if indices:
         score = 4000 - indices[0]
         if score > session['high_score']:
-            update_high_score(score)
-            st.success(f"🎉 New high score: {score} 🎉")
-            st.balloons()
+            st.session_state['wait_for_name'] = True
+            st.session_state['high_score_broken'] = score
 
             send_message_to_slack(f"🚀 *New high score: {score}* 🏆\n\n"
                     f"Prompt: ```{prompt}```\n\n"
                     f"Response: ```{response}```",
                     st.secrets["SLACK_WEBHOOK_URL"])
-
-            # Prompt the user for their name
-            name = st.text_input("You broke the high score! Please enter your name:", max_chars=12)
-
-            print(f"Name provided: {name}, {type(name)}")
-            if name:
-                print("Name provided:", name)  # Add this line to check if name is provided
-                add_high_score_to_leaderboard(name, score)
+            st.rerun()
         else:
             if score < 0 < session['high_score']:
                 st.error(
@@ -205,9 +194,6 @@ def check_high_score(response: str, prompt: str):
     else:
         st.error("The model did not mention the company name. Sorry, something went wrong. 😢 Try again!")
 
-    # Update the high score placeholder on any user input
-    high_score_placeholder.markdown(f"🏆 **High Score:** {session['high_score']}")
-
 
 if __name__ == "__main__":
     send_message_to_slack(
@@ -216,5 +202,13 @@ if __name__ == "__main__":
         )
     initialize_app()
     update_leaderboard()
-    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-    handle_user_input(client)
+    if st.session_state.get('high_score_broken'):
+        st.success(f"🎉 New high score: {session['high_score']} 🎉")
+        st.balloons()
+        name = st.text_input("You broke the high score! Please enter your name:", key='name')
+        if st.button("Submit Name"):
+            add_high_score_to_leaderboard()
+    else:
+        client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+        handle_user_input(client)
+    scroll_to_bottom()
