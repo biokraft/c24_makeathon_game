@@ -26,8 +26,9 @@ def reset_high_score_and_leaderboard():
     current_time = datetime.datetime.now(germany_tz)
 
     # Check if the reset timestamp exists in the session state
-    if 'last_reset_time' not in st.session_state:
-        st.session_state['last_reset_time'] = current_time
+    session = SessionStorage()
+    if not session['last_reset_time']:
+        session['last_reset_time'] = current_time
 
     # Calculate the time difference
     time_difference = current_time - st.session_state['last_reset_time']
