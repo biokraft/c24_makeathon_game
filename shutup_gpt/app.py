@@ -202,6 +202,7 @@ if __name__ == "__main__":
             "*Shut up GPT is live!* 🚀 High score is reset. Let's see who will claim it! 🏆",
             st.secrets["SLACK_WEBHOOK_URL"]
             )
+        st.session_state['app_running'] = True
     initialize_app()
     update_leaderboard()
     if st.session_state.get('high_score_broken'):
