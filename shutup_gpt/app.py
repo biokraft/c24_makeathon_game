@@ -186,7 +186,7 @@ def check_high_score(response: str, prompt: str):
             if score < 0 < global_app_session['high_score']:
                 st.error(
                     f"That was a pretty bad attempt 😬\n"
-                    f"High score: {global_app_session['high_score']}."
+                    f"Try again 🍀"
                 )
             else:
                 st.success(
