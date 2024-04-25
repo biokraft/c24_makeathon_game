@@ -28,7 +28,7 @@ bot_roles = [
     "a time traveler from the past",
     ]
 
-st.title("C24 - Shut up GPT! 🤐")
+st.title("CHECK24 - Shut up GPT! 🤐")
 def initialize_app():
     update_high_score(global_app_session['high_score'])
     display_disclaimer()
