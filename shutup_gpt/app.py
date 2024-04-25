@@ -8,7 +8,7 @@ import regex as re
 from slack import send_message_to_slack
 from utils import reset_high_score_and_leaderboard, scroll_to_bottom
 
-session = SessionStorage()
+global_app_session = SessionStorage()
 
 bot_roles = [
     "a quirky time traveler from the future",
@@ -30,7 +30,7 @@ bot_roles = [
 
 st.title("C24 - Shut up GPT! 🤐")
 def initialize_app():
-    update_high_score(session['high_score'])
+    update_high_score(global_app_session['high_score'])
     display_disclaimer()
 
     if "openai_model" not in st.session_state:
@@ -73,7 +73,7 @@ def update_high_score(score: int = 0):
     Args:
         score (int): The high score.
     """
-    session['high_score'] = score
+    global_app_session['high_score'] = score
 
 
 def handle_user_input(client: OpenAI):
@@ -126,10 +126,10 @@ def update_leaderboard():
     st.sidebar.empty()
     st.sidebar.title("Leaderboard")
     reset_high_score_and_leaderboard()
-    if not session['leaderboard']:
+    if not global_app_session['leaderboard']:
         st.sidebar.write("No high scores yet. Be the first to claim the top spot!")
     else:
-        for idx, (player, score) in enumerate(session['leaderboard'].items()):
+        for idx, (player, score) in enumerate(global_app_session['leaderboard'].items()):
             st.sidebar.write(f"{idx + 1}. {player}: {score}")
 
 def add_high_score_to_leaderboard():
@@ -137,20 +137,20 @@ def add_high_score_to_leaderboard():
     Update the leaderboard with the new high score.
     """
     # Initialize the leaderboard if it doesn't exist
-    if not session['leaderboard']:
-        session['leaderboard'] = {}
+    if not global_app_session['leaderboard']:
+        global_app_session['leaderboard'] = {}
 
     if st.session_state.get('high_score_broken', False) and 'name' in st.session_state:
         name = st.session_state['name']
         score = st.session_state['high_score_broken']
 
-        if score > session['high_score']:
+        if score > global_app_session['high_score']:
             update_high_score(score)
 
         # Add the new high score to the leaderboard
-        session['leaderboard'][name] = score
+        global_app_session['leaderboard'][name] = score
         # Sort the leaderboard in descending order of scores
-        session['leaderboard'] = dict(sorted(session['leaderboard'].items(), key=lambda item: item[1], reverse=True))
+        global_app_session['leaderboard'] = dict(sorted(global_app_session['leaderboard'].items(), key=lambda item: item[1], reverse=True))
 
         update_leaderboard()
         del st.session_state['high_score_broken']  # Clear the high score flag
@@ -172,41 +172,43 @@ def check_high_score(response: str, prompt: str):
     indices = [match.start() for match in search]
     if indices:
         score = 4000 - indices[0]
-        if score > session['high_score']:
+        if score > global_app_session['high_score']:
             st.session_state['wait_for_name'] = True
             st.session_state['high_score_broken'] = score
 
-            send_message_to_slack(f"🚀 *New high score: {score}* 🏆\n\n"
-                    f"Prompt: ```{prompt}```\n\n"
-                    f"Response: ```{response}```",
-                    st.secrets["SLACK_WEBHOOK_URL"])
+            if "SLACK_WEBHOOK_URL" in st.secrets:
+                send_message_to_slack(f"🚀 *New high score: {score}* 🏆\n\n"
+                        f"Prompt: ```{prompt}```\n\n"
+                        f"Response: ```{response}```",
+                        st.secrets["SLACK_WEBHOOK_URL"])
             st.rerun()
         else:
-            if score < 0 < session['high_score']:
+            if score < 0 < global_app_session['high_score']:
                 st.error(
                     f"That was a pretty bad attempt 😬\n"
-                    f"High score: {session['high_score']}."
+                    f"High score: {global_app_session['high_score']}."
                 )
             else:
                 st.success(
                     f"Score: {score}.\n"
-                    f"High score: {session['high_score']}."
+                    f"High score: {global_app_session['high_score']}."
                 )
     else:
         st.error("The model did not mention the company name. Sorry, something went wrong. 😢 Try again!")
 
 
 if __name__ == "__main__":
-    if not st.session_state.get('app_running'):
-        send_message_to_slack(
-            "*Shut up GPT is live!* 🚀 High score is reset. Let's see who will claim it! 🏆",
-            st.secrets["SLACK_WEBHOOK_URL"]
-            )
-        st.session_state['app_running'] = True
+    if not global_app_session['app_running']:
+        if "SLACK_WEBHOOK_URL" in st.secrets:
+            send_message_to_slack(
+                "*Shut up GPT is live!* 🚀 High score is reset. Let's see who will claim it! 🏆",
+                st.secrets["SLACK_WEBHOOK_URL"]
+                )
+        global_app_session['app_running'] = True
     initialize_app()
     update_leaderboard()
     if st.session_state.get('high_score_broken'):
-        st.success(f"🎉 New high score: {session['high_score']} 🎉")
+        st.success(f"🎉 New high score: {global_app_session['high_score']} 🎉")
         st.balloons()
         name = st.text_input("You broke the high score! Please enter your name:", key='name')
         if st.button("Submit Name"):

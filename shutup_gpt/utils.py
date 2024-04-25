@@ -1,6 +1,7 @@
 import streamlit as st
 import datetime
 import streamlit.components.v1 as components
+import pytz
 from session import SessionStorage
 
 def scroll_to_bottom():
@@ -21,7 +22,8 @@ def reset_high_score_and_leaderboard():
     """
     Reset the high score and leaderboard if an hour has passed since the last reset.
     """
-    current_time = datetime.datetime.now()
+    germany_tz = pytz.timezone('Europe/Berlin')
+    current_time = datetime.datetime.now(germany_tz)
 
     # Check if the reset timestamp exists in the session state
     if 'last_reset_time' not in st.session_state:
@@ -36,7 +38,6 @@ def reset_high_score_and_leaderboard():
         session['high_score'] = 0
         session['leaderboard'] = {}
         st.session_state['last_reset_time'] = current_time
-        st.experimental_rerun()
 
     # Display the time of the next scheduled reset
     next_reset_time = st.session_state['last_reset_time'] + datetime.timedelta(hours=1)
