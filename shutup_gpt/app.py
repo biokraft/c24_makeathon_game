@@ -67,9 +67,9 @@ def display_disclaimer():
     """
     with st.expander("ℹ️ How to play"):
         st.write(
-            "This quirky chatbot seems to really like Check24 and has a multiple personality disorder. "
+            "This quirky chatbot seems to really like CHECK24 and has a multiple personality disorder. "
             "Additionally, it won't shut up about how much it loves the company. 🤫\n\n"
-            "The goal of this game is to get the bot to output 'Check24' as early as possible.\n\n"
+            "The goal of this game is to get the bot to output 'CHECK24' as early as possible.\n\n"
             "Hint: This means as close as possible to the start of the response string.\n\n"
             "The leaderboard will be displayed in the sidebar. If you break the high score, you can enter your name. "
             "Before you submit your name, make sure to take a screenshot with the time of you breaking the high score "
