@@ -42,17 +42,17 @@ def reset_high_score_and_leaderboard():
     # Calculate the time difference
     time_difference = current_time - session['last_reset_time']
 
+    next_reset_time = session['last_reset_time'] + datetime.timedelta(hours=1)
     # Reset the high score and leaderboard if an hour has passed
     if time_difference.total_seconds() >= 3600:
         session.reset()
         if "SLACK_WEBHOOK_URL" in st.secrets:
             send_message_to_slack(
                 f"🚀 *Leaderboard was reset!* 🏆\n"
-                f"Next reset at: {session['last_reset_time'].strftime('%Y-%m-%d %H:%M')}",
+                f"Next reset at: {next_reset_time.strftime('%Y-%m-%d %H:%M')}",
                 st.secrets["SLACK_WEBHOOK_URL"]
                 )
 
     # Display the time of the next scheduled reset
-    next_reset_time = session['last_reset_time'] + datetime.timedelta(hours=1)
     st.sidebar.write(f"Next reset at: {next_reset_time.strftime('%Y-%m-%d %H:%M')}")
 
