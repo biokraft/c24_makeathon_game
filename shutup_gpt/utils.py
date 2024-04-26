@@ -9,7 +9,7 @@ def set_page_configuration():
     st.set_page_config(
         page_title="Check24 Shut Up GPT!",
         page_icon="🤐",
-        initial_sidebar_state="collapsed",
+        layout="wide",
     )
 
 

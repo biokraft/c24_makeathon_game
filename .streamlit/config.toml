@@ -1,7 +1,3 @@
 # streamlit configuration file
 [browser]
 gatherUsageStats = false
-
-[layout]
-initialSidebarState = "auto"
-initialWideMode = true
