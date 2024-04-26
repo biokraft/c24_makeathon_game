@@ -72,6 +72,9 @@ def display_disclaimer():
             "The goal of this game is to get the bot to output 'Check24' as early as possible.\n\n"
             "Hint: This means as close as possible to the start of the response string.\n\n"
             "The leaderboard will be displayed in the sidebar. If you break the high score, you can enter your name. "
+            "Before you submit your name, make sure to take a screenshot with the time of you breaking the high score "
+            "and the popup displaying that you broke it. 📸 - Each leaderboard reset, the person with the highest score "
+            "will be the winner that is eligible to receive a reward from our personnel.\n\n"
             "Good luck! 🍀\n\n"
         )
         st.markdown(
