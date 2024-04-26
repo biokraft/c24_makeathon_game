@@ -1,3 +1,6 @@
 # streamlit configuration file
 [browser]
 gatherUsageStats = false
+
+[server]
+allowRunOnSave = true
