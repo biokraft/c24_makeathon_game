@@ -126,7 +126,7 @@ def handle_user_input(client: OpenAI):
                 if "SLACK_WEBHOOK_URL" in st.secrets:
                     send_message_to_slack(
                         f"🚀 *Leaderboard was reset manually!* 🏆\n"
-                        f"Next reset at: {session['last_reset_time'].strftime('%Y-%m-%d %H:%M')}",
+                        f"Next reset in an hour. 🕒",
                         st.secrets["SLACK_WEBHOOK_URL"]
                         )
                 session.reset()

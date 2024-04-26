@@ -49,7 +49,7 @@ def reset_high_score_and_leaderboard():
         if "SLACK_WEBHOOK_URL" in st.secrets:
             send_message_to_slack(
                 f"🚀 *Leaderboard was reset!* 🏆\n"
-                f"Next reset at: {next_reset_time.strftime('%Y-%m-%d %H:%M')}",
+                f"Next reset in an hour. 🕒",
                 st.secrets["SLACK_WEBHOOK_URL"]
                 )
 
