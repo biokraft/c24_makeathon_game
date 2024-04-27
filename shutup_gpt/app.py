@@ -213,7 +213,7 @@ def check_high_score(response: str):
     indices = [match.start() for match in search]
     if indices:
         score = 1000 - indices[0] - ((get_user_message_count() - 1) * 20)
-        if score > global_app_session['high_score'] and global_app_session['high_score'] <= 0:
+        if score > global_app_session['high_score']:
             st.session_state['wait_for_name'] = True
             st.session_state['high_score_broken'] = score
             st.rerun()
